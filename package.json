@@ -8,13 +8,15 @@
     "@testing-library/user-event": "^7.1.2",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "typescript": "^3.9.5"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "emulator": "GOOGLE_APPLICATION_CREDENTIALS='/home/james/Documents/hh-strava-gallery/auth.json' firebase emulators:start"
   },
   "eslintConfig": {
     "extends": "react-app"
