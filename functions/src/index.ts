@@ -1,23 +1,38 @@
-import * as sharp from "sharp"
-import * as short from "short-uuid"
-import * as puppeteer from "puppeteer"
 import * as admin from "firebase-admin"
 import * as functions from "firebase-functions"
+import puppeteer from "puppeteer"
+import sharp from "sharp"
 import { Storage } from "@google-cloud/storage"
-import * as devices from "puppeteer/DeviceDescriptors"
+import { PubSub } from "@google-cloud/pubsub"
+
+import secret from "./secret.json"
 
 admin.initializeApp();
 const db = admin.firestore()
 const storage = new Storage()
 const bucket = storage.bucket("hh-strava-gallery.appspot.com")
+const pubsubClient = new PubSub()
 
-async function getActivityImage() {
+const device = {
+  name: 'iPhone X',
+  userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
+  viewport: {
+    width: 375,
+    height: 812,
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+    isLandscape: false,
+  },
+}
+
+async function getActivityImage(activityURL: string) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] })
 
   const page = await browser.newPage()
   // @ts-ignore
-  await page.emulate(devices.devicesMap["iPhone X"])
-  await page.goto('https://www.strava.com/activities/3553306454')
+  await page.emulate(device)
+  await page.goto(activityURL)
 
   await page.waitForSelector("#start-marker")
   const scrape = await page.evaluate(() => {
@@ -43,28 +58,66 @@ async function getActivityImage() {
 
   await browser.close()
 
-  const resized = await sharp(image).resize(1000, 900).png().toBuffer()
+  const resized = await sharp(image).resize(1000, 900).webp().toBuffer()
 
   return { image: resized, date: scrape.date }
 }
 
-export const addStravaActivity = functions.https.onRequest(async (data, context) => {
-  const activityId = short.generate()
-  const { image, date } = await getActivityImage()
-  const filePath = `activity-images/${activityId}`
-  await bucket.file(filePath).save(image, {
-    contentType: "image/png",
-    resumable: false
-  })
+export const handleStravaActivity = functions.region("europe-west2").pubsub.topic("activities").onPublish(async (message) => {
+  const {id, title, artist, url} = message.json
 
-  await db.collection("activities").doc(activityId).set({
-    id: activityId,
-    title: "Test Activity",
-    artist: ["James Errington"],
-    tags: ["Art"],
-    activityURL: "https://www.example.com",
-    date
-  })
+  console.log(`Uploading activity ${id}...`)
 
-  context.status(200).send({ success: true })
+  try {
+    const { image, date } = await getActivityImage(url)
+    console.log("Image scraped successfully")
+    const filePath = `activity-images/${id}`
+    const file = bucket.file(filePath)
+    await file.save(image, {
+      contentType: "image/webp",
+      resumable: false,
+      metadata: {
+        cacheControl: "public, max-age=31536000"
+      }
+    })
+    console.log("Image uploaded successfully")
+
+    await db.collection("activities").doc(id).set({
+      id,
+      title,
+      artist,
+      tags: [],
+      activityURL: url,
+      date
+    })
+    console.log("Firestore updated successfully")
+
+    return { success: true }
+  } catch (error) {
+    console.error(error)
+    throw new functions.https.HttpsError("internal", "")
+  }
+})
+
+export const pushStravaActivity = functions.region("europe-west2").https.onCall(async (data, context) => {
+  if (data.password !== secret.password) {
+    console.log(`ERROR: Incorrect password ${data.password}`)
+    throw new functions.https.HttpsError("permission-denied", "Password is incorrect")
+  }
+
+  if (/^(https:\/\/)?www\.strava\.com\/activities\/[0-9]+$/.test(data.url) === false) {
+    console.log(`ERROR: Incorrect link ${data.url}`)
+    throw new functions.https.HttpsError("invalid-argument", "Link provided is not a valid Strava activity")
+  }
+
+  const activityId = data.url.split("activities/")[1]
+  const ref = await db.collection("activities").doc(activityId).get()
+  if (ref.exists) {
+    console.log(`ERROR: Activity ${activityId} already exists`)
+    throw new functions.https.HttpsError("already-exists", "The provided activity already exists in the gallery")
+  }
+
+  await pubsubClient.topic("activities").publishJSON({ id: activityId, title: data.title, artist: data.artist, url: data.url })
+
+  return { success: true }
 })

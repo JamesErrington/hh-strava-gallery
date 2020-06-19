@@ -1,0 +1,213 @@
+.App {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content-wrap {
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  margin-bottom: 150px;
+}
+
+.footer {
+  position: absolute !important;
+  bottom: 0;
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.navbar {
+  width: 100%;
+
+  .navbar-menu {
+    height: 110px;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px !important;
+  
+    .navbar-logo {
+      width: 65px;
+      height: 65px;
+    
+      margin: 10px 30px;
+    }
+  
+    .navbar-header {
+      max-width: 100%;
+      text-align: center;
+      &::before {
+        display: none;
+      }
+    }
+  }
+}
+
+.about-text {
+  width: 500px !important;
+  text-align: center;
+  margin-bottom: 15px !important;
+}
+
+.about-email {
+  margin: 10px 0px;
+}
+
+@media (max-width: 720px) {
+  .about-text {
+    width: 100% !important;
+  }
+}
+
+.upload-form-container {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 15px;
+
+  .upload-form-text {
+    text-align: center;
+  }
+
+  form {
+    width: 750px;
+
+    .upload-form-message {
+      text-align: center;
+    }
+
+    .upload-form-button {
+      display: flex;
+      justify-content: center;
+    }
+  }
+}
+
+.activity-modal {
+  .content {
+    text-align: center;
+    font-size: large !important;
+  }
+
+  
+
+  @media (max-width: 500px) {
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .activity-modal-close-button {
+      position: unset;
+    }
+  }
+
+  @media (min-width: 500px) {
+    .actions {
+      display: flex;
+      justify-content: center;
+    }
+
+    .activity-modal-close-button {
+      position: absolute;
+      right: 15px;
+    }
+  }
+}
+
+.activity-card {
+  width: 200px !important;
+  text-align: center;
+  text-decoration: none;
+  color: black;
+
+
+  .activity-image-thumbnail {
+    width: 200px;
+    height: 180px;
+  }
+
+  .description {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    p {
+      margin: 5px;
+    }
+  }
+}
+
+.activity-gallery-container {
+  width: 100%;
+
+  .divider {
+    margin-bottom: 0px !important;
+  }
+  
+  .activity-gallery-grid {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+  
+    .column {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+  }
+}
+
+
+@media (max-width: 720px) {
+  .activity-gallery-grid {
+    .column {
+      width: 100%;
+    }
+  }
+}
+
+@media (min-width: 720px) and (max-width: 1080px) {
+  .activity-gallery-grid {
+    .column {
+      width: 50%;
+    }
+  }
+}
+
+@media (min-width: 1080px) and (max-width: 1430px) {
+  .activity-gallery-grid {
+    .column {
+      width: 33%;
+    }
+  }
+}
+
+@media (min-width: 1430px) and (max-width: 1800px) {
+  .activity-gallery-grid {
+    .column {
+      width: 25%;
+    }
+  }
+}
+
+@media (min-width: 1800px) {
+  .activity-gallery-grid {
+    .column {
+      width: 20%;
+    }
+  }
+}
